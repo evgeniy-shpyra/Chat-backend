@@ -2,13 +2,13 @@ const jwt = require('jsonwebtoken')
 const pool = require('../db')
 
 const selectTokenByUserQuery =
-    'SELECT refreshToken, user_id FROM tokens WHERE user_id = $1'
+    'SELECT refresh_token as refreshToken, user_id FROM tokens WHERE user_id = $1'
 const selectTokenByTokenQuery =
-    'SELECT refreshToken, user_id FROM tokens WHERE refreshToken = $1'
+    'SELECT refresh_token as refreshToken, user_id FROM tokens WHERE refresh_token = $1'
 const createTokenQuery =
-    'INSERT INTO tokens (refreshToken, user_id) VALUES ($1, $2) RETURNING refreshToken, user_id as id'
+    'INSERT INTO tokens (refresh_token, user_id) VALUES ($1, $2) RETURNING refresh_token as refreshToken, user_id as id'
 const updateTokenQuery =
-    'UPDATE tokens SET refreshToken = $1 WHERE user_id = $2 RETURNING refreshToken, user_id as id'
+    'UPDATE tokens SET refresh_token = $1 WHERE user_id = $2 RETURNING refresh_token as refreshToken , user_id as id'
 
 class TokenService {
     generateTokens(payload) {
@@ -80,7 +80,8 @@ class TokenService {
     async findToken(refreshToken) {
         const tokenData = await pool.query(selectTokenByTokenQuery, [
             refreshToken,
-        ])
+        ]).then((res) => res.rows[0])
+        
         return tokenData
     }
 }

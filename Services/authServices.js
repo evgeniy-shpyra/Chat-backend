@@ -1,6 +1,7 @@
 const pool = require('../db')
 const bcrypt = require('bcrypt')
 const tokenService = require('./tokenService')
+const userServices = require('./userServices')
 
 const insertUserQuery =
     'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id as id, username, email'
@@ -35,7 +36,7 @@ class AuthService {
 
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
-        return { tokens, user }
+        return { user, tokens }
     }
 
     async login({ username, password }) {
@@ -55,19 +56,23 @@ class AuthService {
             throw new Error('Incorrect username or password')
         }
 
+        const avatar = await userServices.getAvatar(selectUserByUsername.id)
+
         const user = {
             username: selectUserByUsername.username,
             id: selectUserByUsername.id,
             email: selectUserByUsername.email,
         }
 
-        const tokens = tokenService.generateTokens({
-            user,
+        const tokens = await tokenService.generateTokens({
+            ...user,
         })
 
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
-        return { tokens, user }
+        if (avatar)
+            return { user: { ...user, imagePath: avatar.path }, tokens }
+        else return { user, tokens }
     }
 
     async refresh(refreshToken) {
@@ -82,22 +87,26 @@ class AuthService {
         }
 
         const selectUser = await pool
-            .query(selectUserByUsernameQuery, [username])
+            .query(selectUserByUsernameQuery, [userData.username])
             .then((res) => res.rows[0])
+
+        const avatar = await userServices.getAvatar(selectUser.id)
 
         const user = {
             username: selectUser.username,
             id: selectUser.id,
             email: selectUser.email,
         }
-
-        const tokens = tokenService.generateTokens({
-            user,
+        
+        const tokens = await tokenService.generateTokens({
+            ...user,
         })
 
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
-        return { tokens, user }
+        if (avatar)
+            return { user: { ...user, imagePath: avatar.path }, tokens }
+        else return { user, tokens }
     }
 }
 
