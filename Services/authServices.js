@@ -6,7 +6,7 @@ const userServices = require('./userServices')
 const insertUserQuery =
     'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id as id, username, email'
 const selectUserByUsernameQuery =
-    'SELECT user_id as id, username, email, password FROM users WHERE username=$1'
+    'SELECT users.user_id AS id, users.username, users.email, users.password, images.path AS image_path FROM users LEFT JOIN images ON images.user_id = users.user_id WHERE users.username=$1'
 const selectUserByEmailQuery =
     'SELECT user_id as id, username , email, password FROM users WHERE email=$1'
 
@@ -40,28 +40,26 @@ class AuthService {
     }
 
     async login({ username, password }) {
-        const selectUserByUsername = await pool
+        const selectUser = await pool
             .query(selectUserByUsernameQuery, [username])
             .then((res) => res.rows[0])
 
-        if (!selectUserByUsername)
+        if (!selectUser)
             throw new Error('Incorrect username or password')
 
         const isPasswordRight = await bcrypt.compare(
             password,
-            selectUserByUsername.password
+            selectUser.password
         )
 
         if (!isPasswordRight) {
             throw new Error('Incorrect username or password')
         }
 
-        const avatar = await userServices.getAvatar(selectUserByUsername.id)
-
         const user = {
-            username: selectUserByUsername.username,
-            id: selectUserByUsername.id,
-            email: selectUserByUsername.email,
+            username: selectUser.username,
+            id: selectUser.id,
+            email: selectUser.email,
         }
 
         const tokens = await tokenService.generateTokens({
@@ -70,9 +68,9 @@ class AuthService {
 
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
-        if (avatar)
-            return { user: { ...user, imagePath: avatar.path }, tokens }
-        else return { user, tokens }
+        user.image_path = selectUser.image_path
+
+        return { user, tokens }
     }
 
     async refresh(refreshToken) {
@@ -90,23 +88,23 @@ class AuthService {
             .query(selectUserByUsernameQuery, [userData.username])
             .then((res) => res.rows[0])
 
-        const avatar = await userServices.getAvatar(selectUser.id)
 
         const user = {
             username: selectUser.username,
             id: selectUser.id,
             email: selectUser.email,
         }
-        
+
         const tokens = await tokenService.generateTokens({
             ...user,
         })
 
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
-        if (avatar)
-            return { user: { ...user, imagePath: avatar.path }, tokens }
-        else return { user, tokens }
+        user.image_path = selectUser.image_path
+
+
+        return { user, tokens }
     }
 }
 

@@ -3,42 +3,28 @@ const userService = require('../Services/userServices')
 module.exports.addAvatar = async (req, res, next) => {
     try {
         const file = req.files
-        const params = req.params
+        const userId = req.user.id
 
-        const path = await userService.addAvatar(file.image, params.id)
+        const path = await userService.addAvatar(file.image, userId)
 
-        res.json({ path: path, resultCode: 1 })
-        next()
+        return res.json({ path: path, resultCode: 1 })
     } catch (e) {
         console.log(e)
-        res.json({ msg: e.message, resultCode: 0 })
+        return res.json({ msg: e.message, resultCode: 0 })
         next()
     }
 }
 
 module.exports.getUsers = async (req, res, next) => {
     try {
-        const users = await userService.getUsers()
+        const id = req.user.id
+        const page = req.query.page
 
-        res.json({ users, resultCode: 1 })
-        next()
+        const users = await userService.getUsers(id, Number(page))
+
+        return res.json({ users, resultCode: 1 })
     } catch (e) {
         console.log(e)
-        res.json({ msg: e.message, resultCode: 0 })
-        next()
-    }
-}
-
-module.exports.getAvatar = async (req, res, next) => {
-    try {
-        const params = req.params
-        const avatarPath = await userService.getAvatar(params.id)
-
-        res.json({ avatarPath, resultCode: 1 })
-        next()
-    } catch (e) {
-        console.log(e)
-        res.json({ msg: e.message, resultCode: 0 })
-        next()
+        return res.json({ msg: e.message, resultCode: 0 })
     }
 }

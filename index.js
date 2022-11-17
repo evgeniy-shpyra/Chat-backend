@@ -3,8 +3,12 @@ const express = require('express')
 const cors = require('cors')
 const fileUpload = require('express-fileupload')
 const cookieParser = require('cookie-parser')
+const socket = require('socket.io')
 const authRouter = require('./routes/authRoutes')
 const userRouter = require('./routes/userRoutes')
+const dialogueRouter = require('./routes/dialogueRoutes')
+const conversationRoute = require('./routes/conversationRoutes')
+const dialogueSocketController = require('./socketControlleres/dialogueSocketController')
 
 const app = express()
 const port = process.env.PORT
@@ -13,17 +17,64 @@ app.use(cookieParser())
 app.use(
     cors({
         credentials: true,
-        origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+        origin: [process.env.CLIENT_URL],
     })
 )
 app.use(fileUpload({}))
 app.use(express.json())
 
-
-app.use('/api', userRouter)
+app.use('/api', userRouter, dialogueRouter, conversationRoute)
 app.use('/api/auth', authRouter)
 
-
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server started on port ${port}`)
+})
+
+const io = socket(server, {
+    cors: {
+        origin: process.env.CLIENT_URL,
+        credentials: true,
+        methods: ['GET', 'POST'],
+    },
+})
+
+global.onlineUsers = new Map()
+// global.onlineUsers = new Array()
+
+io.on('connection', (socket) => {
+    global.chatSocket = socket
+
+    socket.on('online:add', (userId) => {
+        onlineUsers.set(userId, socket.id)
+    })
+
+    socket.on('dialogue:add', async (data) => {
+        const sendUserSocket = onlineUsers.get(data.toUserId)
+
+        if (sendUserSocket) {
+            const user = await dialogueSocketController.getDialogueForNotOwner(
+                data.dialogueId
+            )
+            user && socket.to(sendUserSocket).emit('dialogue:get', user)
+        }
+    })
+
+    socket.on('message:add', (data) => {
+        const sendUserSocket = onlineUsers.get(data.toUserId)
+        console.log(onlineUsers)
+        console.log(sendUserSocket)
+
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit('message:get', data.message)
+        }
+    })
+
+    socket.on('disconnecting', () => {
+        const keys = onlineUsers.keys()
+
+        for (let i = 0; i < onlineUsers.size; i++) {
+            const key = keys.next().value
+            onlineUsers.get(key) === socket.id && onlineUsers.delete(key)
+        }
+    })
 })
