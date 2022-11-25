@@ -20,7 +20,9 @@ module.exports.getUsers = async (req, res, next) => {
         const id = req.user.id
         const page = req.query.page
 
-        const users = await userService.getUsers(id, Number(page))
+        const name = req.query.name
+
+        const users = await userService.getUsers(id, Number(page), name)
 
         return res.json({ users, resultCode: 1 })
     } catch (e) {

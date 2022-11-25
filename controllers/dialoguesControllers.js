@@ -2,10 +2,9 @@ const dialoguesServices = require('../Services/dialoguesServices')
 
 module.exports.addDialogue = async (req, res, next) => {
     try {
-        const { refreshToken } = req.cookies
         const secondUserId = req.params.id
 
-        const dialogue = await dialoguesServices.addDialogue(refreshToken, secondUserId)
+        const dialogue = await dialoguesServices.addDialogue(req.user.id, secondUserId)
 
         return res.json({ data: dialogue, resultCode: 1 })
 
@@ -17,9 +16,11 @@ module.exports.addDialogue = async (req, res, next) => {
  
 module.exports.getDialogues = async (req, res, next) => {
     try {
-        const { refreshToken } = req.cookies
+     
+        const page = req.query.page
+        const name = req.query.name
 
-        const dialogues = await dialoguesServices.getDialogues(refreshToken)
+        const dialogues = await dialoguesServices.getDialogues(req.user.id, name, page)
 
         return res.json({ data: dialogues, resultCode: 1 })
         

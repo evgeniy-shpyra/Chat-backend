@@ -31,7 +31,7 @@ const server = app.listen(port, () => {
 })
 
 const io = socket(server, {
-    cors: {
+    cors: { 
         origin: process.env.CLIENT_URL,
         credentials: true,
         methods: ['GET', 'POST'],
@@ -61,11 +61,12 @@ io.on('connection', (socket) => {
 
     socket.on('message:add', (data) => {
         const sendUserSocket = onlineUsers.get(data.toUserId)
-        console.log(onlineUsers)
-        console.log(sendUserSocket)
 
-        if (sendUserSocket) {
-            socket.to(sendUserSocket).emit('message:get', data.message)
+        if (sendUserSocket) { 
+            socket.to(sendUserSocket).emit('message:get', {
+                message: data.message,
+                dialogueId: data.dialogueId,
+            })
         }
     })
 

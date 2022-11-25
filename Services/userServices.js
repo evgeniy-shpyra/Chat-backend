@@ -13,8 +13,8 @@ const selectUserById = `SELECT users.user_id as id, users.username, images.path 
 
 const selectUsersQuery =
     `SELECT users.user_id, users.username, users.email, images.path as imagePath FROM users 
-    LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 ORDER BY user_id DESC 
-    LIMIT $2 OFFSET $3`
+    LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 AND username LIKE $2 ORDER BY user_id DESC 
+    LIMIT $3 OFFSET $4`
 
     const selectImageByUserIdQuery = 'SELECT path FROM images WHERE user_id = $1'
 
@@ -63,12 +63,15 @@ class UserService {
         return image.path
     }
 
-    async getUsers(id, page) {
+    async getUsers(id, page, name) {
         const limit = 20
-
         let offset = page ? (page ) * limit : 0
 
-        const users = await pool.query(selectUsersQuery, [id, limit, offset]).then((res) => res.rows)
+        const partOfUsername = name ? name + '%' : '%'
+
+        const users = await pool.query(selectUsersQuery, [id, partOfUsername, limit, offset]).then((res) => res.rows)
+
+       
         return users
     } 
 

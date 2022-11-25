@@ -2,7 +2,7 @@ const s3 = require('../aws/index')
 const pool = require('../db')
 const tokenService = require('./tokenService')
 
-const creteDialogueQuery = `INSERT INTO dialogues (first_user_id, second_user_id, owner_user_id) VALUES ($1, $2, $3) RETURNING dialogue_id`
+const creteDialogueQuery = `INSERT INTO dialogues (first_user_id, second_user_id, owner_user_id, date_of_creation) VALUES ($1, $2, $3, $4) RETURNING dialogue_id`
 const selectDialoguesByOwnerIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
     JOIN usersON ((users.user_id = dialogues.second_user_id) AND (dialogues.second_user_id != $1)) 
     OR 
@@ -16,19 +16,24 @@ const selectDialoguesByUsersIdQuery = `SELECT dialogues.dialogue_id, users.user_
     LEFT JOIN images ON users.user_id = images.user_id
     WHERE (first_user_id=$1 AND second_user_id=$2) OR (second_user_id=$1 AND first_user_id=$2)`
 
-const selectDialoguesByFirstUserIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
+const selectDialoguesByFirstUserIdQuery = `SELECT DISTINCT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path,
+    (CASE WHEN  messages.date IS NULL THEN dialogues.date_of_creation ELSE messages.date END) as date, messages.text
+    FROM dialogues 
     JOIN users ON ((users.user_id = dialogues.second_user_id) AND (dialogues.second_user_id != $1)) 
     OR 
     ((users.user_id = dialogues.first_user_id) AND (dialogues.first_user_id != $1)) 
     LEFT JOIN images ON users.user_id = images.user_id
-    WHERE (first_user_id=$1 OR second_user_id=$1)`
+ 	LEFT JOIN messages ON messages.date = (SELECT MAX(messages.date) FROM messages WHERE messages.dialogue_id = dialogues.dialogue_id)
+    WHERE (first_user_id=$1 OR second_user_id=$1) AND users.username LIKE $2
+	ORDER BY date DESC
+	LIMIT $3 OFFSET $4`
 
 const selectDialogueForNotOwnerUserByIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
     JOIN users ON dialogues.owner_user_id = users.user_id
     LEFT JOIN images ON users.user_id = images.user_id
     WHERE dialogues.dialogue_id = $1`
 
-const selectDialoguesByIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
+const selectDialoguesByIdQuery = `SELECT dialogues.dialogue_id, dialogues.date_of_creation as date, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
     JOIN users ON users.user_id = dialogues.second_user_id
     LEFT JOIN images ON users.user_id = images.user_id
     WHERE dialogues.dialogue_id = $1`
@@ -37,12 +42,7 @@ const selectUserByIdQuery =
     'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
 
 class DialoguesService {
-    async addDialogue(refreshToken, secondUserId) {
-        const ownerId = tokenService.validationRefreshToken(refreshToken).id
-
-        if (!ownerId) {
-            throw Error(`Occurred error`)
-        }
+    async addDialogue(ownerId, secondUserId) {
         const ownerUser = await pool
             .query(selectUserByIdQuery, [ownerId])
             .then((res) => res.rows[0])
@@ -66,7 +66,12 @@ class DialoguesService {
         if (createdDialogue.length > 0) throw Error(`Dialogues already created`)
 
         const dialogueId = await pool
-            .query(creteDialogueQuery, [ownerId, secondUserId, ownerId])
+            .query(creteDialogueQuery, [
+                ownerId,
+                secondUserId,
+                ownerId,
+                new Date(),
+            ])
             .then((res) => res.rows[0].dialogue_id)
 
         const dialogue = await pool
@@ -76,8 +81,12 @@ class DialoguesService {
         return dialogue
     }
 
-    async getDialogues(refreshToken) {
-        const ownerId = tokenService.validationRefreshToken(refreshToken).id
+    async getDialogues(ownerId, searchingValue, page) {
+        const limit = 20
+
+        let offset = page ? page * limit : 0
+
+        const partOfUsername = searchingValue ? searchingValue + '%' : '%'
 
         if (!ownerId) {
             throw Error(`Occurred error`)
@@ -91,8 +100,14 @@ class DialoguesService {
         }
 
         const dialogues = await pool
-            .query(selectDialoguesByFirstUserIdQuery, [ownerId])
+            .query(selectDialoguesByFirstUserIdQuery, [
+                ownerId,
+                partOfUsername,
+                limit,
+                offset,
+            ])
             .then((res) => res.rows)
+       
 
         return dialogues
     }
