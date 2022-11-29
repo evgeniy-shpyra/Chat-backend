@@ -8,7 +8,7 @@ const authRouter = require('./routes/authRoutes')
 const userRouter = require('./routes/userRoutes')
 const dialogueRouter = require('./routes/dialogueRoutes')
 const conversationRoute = require('./routes/conversationRoutes')
-const dialogueSocketController = require('./socketControlleres/dialogueSocketController')
+const dialogueSocketController = require('./socketControllers/dialogueSocketController')
 
 const app = express()
 const port = process.env.PORT
@@ -31,7 +31,7 @@ const server = app.listen(port, () => {
 })
 
 const io = socket(server, {
-    cors: { 
+    cors: {
         origin: process.env.CLIENT_URL,
         credentials: true,
         methods: ['GET', 'POST'],
@@ -59,10 +59,21 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('dialogue:delete', async (data) => {
+        const sendUserSocket = onlineUsers.get(data.toUserId)
+
+        console.log(data)
+
+        if (sendUserSocket)
+            socket
+                .to(sendUserSocket)
+                .emit('dialogue:delete', { dialogueId: data.dialogueId })
+    })
+
     socket.on('message:add', (data) => {
         const sendUserSocket = onlineUsers.get(data.toUserId)
 
-        if (sendUserSocket) { 
+        if (sendUserSocket) {
             socket.to(sendUserSocket).emit('message:get', {
                 message: data.message,
                 dialogueId: data.dialogueId,

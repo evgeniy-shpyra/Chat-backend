@@ -16,7 +16,7 @@ const selectUsersQuery = `SELECT users.user_id, users.username, users.email, ima
 	(dialogues.first_user_id = users.user_id AND dialogues.second_user_id = 99) 
 	OR 
 	(dialogues.first_user_id = 99 AND dialogues.second_user_id = users.user_id)
-    ) = 0 THEN 0 ELSE 1 END) as is_dialogue
+    ) = 0 THEN 0 ELSE 1 END) as is_exist_dialogue
     FROM users 
     LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 AND username LIKE $2 ORDER BY user_id DESC 
     LIMIT $3 OFFSET $4`
@@ -30,6 +30,9 @@ const selectInterlocutorUserByDialogueIdAndOwnerUserId = `SELECT users.user_id, 
     LEFT JOIN images ON images.user_id = users.user_id
     WHERE dialogues.dialogue_id = $2
     GROUP BY users.user_id, images.path`
+
+const selectUserIdByDialogueId = `SELECT (CASE WHEN dialogues.first_user_id = $1 THEN dialogues.second_user_id ELSE dialogues.first_user_id END) as user_id FROM dialogues  
+    WHERE dialogues.dialogue_id = $2`
 
 class UserService {
     async addAvatar(file, id) {
@@ -103,6 +106,14 @@ class UserService {
             ])
             .then((res) => res.rows[0])
         return users
+    }
+
+    async getUserIdByDialogueId(firstUserId, dialogueId) {
+        const secondUserId = await pool
+            .query(selectUserIdByDialogueId, [firstUserId, dialogueId])
+            .then((res) => res[0].user_id)
+
+        return secondUserId
     }
 }
 

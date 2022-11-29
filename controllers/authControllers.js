@@ -28,7 +28,7 @@ module.exports.login = async (req, res, next) => {
     
 
         const user = await authService.login({ username, password })
-        console.log(user)
+    
         res.cookie('refreshToken', user.tokens.refreshToken, {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,

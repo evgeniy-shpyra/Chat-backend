@@ -41,6 +41,8 @@ const selectDialoguesByIdQuery = `SELECT dialogues.dialogue_id, dialogues.date_o
 const selectUserByIdQuery =
     'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
 
+const deleteDialogueById = 'DELETE FROM dialogues WHERE dialogue_id = $1'
+
 class DialoguesService {
     async addDialogue(ownerId, secondUserId) {
         const ownerUser = await pool
@@ -107,9 +109,13 @@ class DialoguesService {
                 offset,
             ])
             .then((res) => res.rows)
-       
 
         return dialogues
+    }
+
+    async deleteDialogue(id) {
+        await pool.query(deleteDialogueById, [id])
+        return id
     }
 
     async getDialogueForNotOwner(dialogueId) {
