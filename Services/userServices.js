@@ -11,12 +11,17 @@ const selectUserByUserNameQuery =
 
 const selectUserById = `SELECT users.user_id as id, users.username, images.path as image_path FROM users LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id=$1`
 
-const selectUsersQuery =
-    `SELECT users.user_id, users.username, users.email, images.path as imagePath FROM users 
+const selectUsersQuery = `SELECT users.user_id, users.username, users.email, images.path as imagePath,
+    (CASE WHEN (SELECT COUNT(*) FROM dialogues WHERE 
+	(dialogues.first_user_id = users.user_id AND dialogues.second_user_id = 99) 
+	OR 
+	(dialogues.first_user_id = 99 AND dialogues.second_user_id = users.user_id)
+    ) = 0 THEN 0 ELSE 1 END) as is_dialogue
+    FROM users 
     LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 AND username LIKE $2 ORDER BY user_id DESC 
     LIMIT $3 OFFSET $4`
 
-    const selectImageByUserIdQuery = 'SELECT path FROM images WHERE user_id = $1'
+const selectImageByUserIdQuery = 'SELECT path FROM images WHERE user_id = $1'
 
 const selectInterlocutorUserByDialogueIdAndOwnerUserId = `SELECT users.user_id, users.username, images.path as image_path FROM users 
     JOIN dialogues ON ((users.user_id = dialogues.second_user_id) AND (dialogues.second_user_id != $1)) 
@@ -65,15 +70,16 @@ class UserService {
 
     async getUsers(id, page, name) {
         const limit = 20
-        let offset = page ? (page ) * limit : 0
+        let offset = page ? page * limit : 0
 
         const partOfUsername = name ? name + '%' : '%'
 
-        const users = await pool.query(selectUsersQuery, [id, partOfUsername, limit, offset]).then((res) => res.rows)
+        const users = await pool
+            .query(selectUsersQuery, [id, partOfUsername, limit, offset])
+            .then((res) => res.rows)
 
-       
         return users
-    } 
+    }
 
     async getUserByUsername(username) {
         const users = await pool
@@ -91,11 +97,13 @@ class UserService {
 
     async getInterlocutorUserId(user_id, dialogue_id) {
         const users = await pool
-            .query(selectInterlocutorUserByDialogueIdAndOwnerUserId, [user_id, dialogue_id])
+            .query(selectInterlocutorUserByDialogueIdAndOwnerUserId, [
+                user_id,
+                dialogue_id,
+            ])
             .then((res) => res.rows[0])
         return users
     }
-
 }
 
 module.exports = new UserService()

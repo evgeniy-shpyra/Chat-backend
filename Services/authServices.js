@@ -40,12 +40,13 @@ class AuthService {
     }
 
     async login({ username, password }) {
+        
+        
         const selectUser = await pool
             .query(selectUserByUsernameQuery, [username])
             .then((res) => res.rows[0])
-
-        if (!selectUser)
-            throw new Error('Incorrect username or password')
+       
+        if (!selectUser) throw new Error('Incorrect username or password')
 
         const isPasswordRight = await bcrypt.compare(
             password,
@@ -88,7 +89,6 @@ class AuthService {
             .query(selectUserByUsernameQuery, [userData.username])
             .then((res) => res.rows[0])
 
-
         const user = {
             username: selectUser.username,
             id: selectUser.id,
@@ -102,7 +102,6 @@ class AuthService {
         await tokenService.saveToken(user.id, tokens.refreshToken)
 
         user.image_path = selectUser.image_path
-
 
         return { user, tokens }
     }
