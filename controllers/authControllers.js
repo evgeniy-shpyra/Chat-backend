@@ -53,7 +53,7 @@ module.exports.refresh = async (req, res, next) => {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,
         })
-
+        console.log(res.cookie)
         res.json({ data: userData, resultCode: 1 })
     } catch (e) {
         console.log(e)
