@@ -12,6 +12,8 @@ module.exports.register = async (req, res, next) => {
         res.cookie('refreshToken', user.tokens.refreshToken, {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,
+            sameSite: 'none',
+            secure: true,
         })
         res.json({ data: user, resultCode: 1 })
         next()
@@ -31,6 +33,8 @@ module.exports.login = async (req, res, next) => {
         res.cookie('refreshToken', user.tokens.refreshToken, {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,
+            sameSite: 'none',
+            secure: true,
         })
         res.json({ data: user, resultCode: 1 })
 
