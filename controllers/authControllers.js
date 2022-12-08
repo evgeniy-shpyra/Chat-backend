@@ -52,6 +52,8 @@ module.exports.refresh = async (req, res, next) => {
         res.cookie('refreshToken', userData.tokens.refreshToken, {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: true,
+            sameSite: 'none',
+            secure: true,
         })
         console.log(res.cookie)
         res.json({ data: userData, resultCode: 1 })
