@@ -73,7 +73,8 @@ class AuthService {
     }
 
     async refresh(refreshToken) {
-        if (!refreshToken) throw new Error('The user is not authorized')
+
+        if (!refreshToken) throw new Error('The user is not authorized, refreshToken')
 
         const userData = tokenService.validationRefreshToken(refreshToken)
 
