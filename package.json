@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "dev": "nodemon index.js",
-        "start": "node index.js",
+        "start": "node server.mjs",
         "lint": "eslint --ignore-path .gitignore .",
         "lint:fix": "npm run lint -- --fix",
         "format": "prettier --ignore-path .gitignore --check .",
