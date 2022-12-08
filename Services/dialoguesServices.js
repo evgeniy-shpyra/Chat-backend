@@ -1,15 +1,9 @@
 const s3 = require('../aws/index')
 const pool = require('../db')
 const tokenService = require('./tokenService')
+const { getUserIdByDialogueId } = require('./userServices')
 
 const creteDialogueQuery = `INSERT INTO dialogues (first_user_id, second_user_id, owner_user_id, date_of_creation) VALUES ($1, $2, $3, $4) RETURNING dialogue_id`
-const selectDialoguesByOwnerIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
-    JOIN usersON ((users.user_id = dialogues.second_user_id) AND (dialogues.second_user_id != $1)) 
-    OR 
-    ((users.user_id = dialogues.first_user_id) AND (dialogues.first_user_id != $1)) 
-    LEFT JOIN images ON users.user_id = images.user_id
-    WHERE owner_user_id=$1
-    ORDER BY dialogues.dialogue_id DESC`
 
 const selectDialoguesByUsersIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
     JOIN users ON users.user_id = dialogues.second_user_id
@@ -28,7 +22,9 @@ const selectDialoguesByFirstUserIdQuery = `SELECT DISTINCT dialogues.dialogue_id
 	ORDER BY date DESC
 	LIMIT $3 OFFSET $4`
 
-const selectDialogueForNotOwnerUserByIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path FROM dialogues 
+const selectDialogueForNotOwnerUserByIdQuery = `SELECT dialogues.dialogue_id, users.user_id, users.username, users.email, images.path as image_path,
+    dialogues.date_of_creation as date
+    FROM dialogues 
     JOIN users ON dialogues.owner_user_id = users.user_id
     LEFT JOIN images ON users.user_id = images.user_id
     WHERE dialogues.dialogue_id = $1`
@@ -41,7 +37,8 @@ const selectDialoguesByIdQuery = `SELECT dialogues.dialogue_id, dialogues.date_o
 const selectUserByIdQuery =
     'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
 
-const deleteDialogueById = 'DELETE FROM dialogues WHERE dialogue_id = $1'
+const deleteDialogueById =
+    'DELETE FROM dialogues WHERE dialogue_id = $1 RETURNING dialogue_id'
 
 class DialoguesService {
     async addDialogue(ownerId, secondUserId) {
@@ -76,9 +73,7 @@ class DialoguesService {
             ])
             .then((res) => res.rows[0].dialogue_id)
 
-        const dialogue = await pool
-            .query(selectDialoguesByIdQuery, [dialogueId])
-            .then((res) => res.rows[0])
+        const dialogue = await this.getDialogueById(dialogueId)
 
         return dialogue
     }
@@ -113,9 +108,21 @@ class DialoguesService {
         return dialogues
     }
 
-    async deleteDialogue(id) {
-        await pool.query(deleteDialogueById, [id])
-        return id
+    async getDialogueById(dialogueId) {
+        const dialogue = await pool
+            .query(selectDialoguesByIdQuery, [dialogueId])
+            .then((res) => res.rows[0])
+        return dialogue
+    }
+
+    async deleteDialogue(firstUserId, dialogueId) {
+        const interlocutorId = await getUserIdByDialogueId(
+            firstUserId,
+            dialogueId
+        )
+    
+        await pool.query(deleteDialogueById, [dialogueId])
+        return interlocutorId
     }
 
     async getDialogueForNotOwner(dialogueId) {

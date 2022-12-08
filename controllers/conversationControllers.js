@@ -46,6 +46,21 @@ class ConversationController {
             return res.json({ msg: e.message, resultCode: 0 })
         }
     }
+    clearHistory = async (req, res, next) => {
+        try {
+            const dialogueId = req.params.id
+
+            await conversationServices.clearHistory(dialogueId)
+
+            return res.json({
+                data: { dialogueId },
+                resultCode: 1,
+            })
+        } catch (e) {
+            console.log(e)
+            return res.json({ msg: e.message, resultCode: 0 })
+        }
+    }
 }
 
 module.exports = new ConversationController()

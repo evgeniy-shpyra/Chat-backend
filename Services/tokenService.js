@@ -9,6 +9,8 @@ const createTokenQuery =
     'INSERT INTO tokens (refresh_token, user_id) VALUES ($1, $2) RETURNING refresh_token as refreshToken, user_id as id'
 const updateTokenQuery =
     'UPDATE tokens SET refresh_token = $1 WHERE user_id = $2 RETURNING refresh_token as refreshToken , user_id as id'
+const deleteTokenQuery =
+    'DELETE FROM tokens WHERE refresh_token = $1 RETURNING refresh_token as refreshToken'
 
 class TokenService {
     generateTokens(payload) {
@@ -71,17 +73,19 @@ class TokenService {
     //-----------------------------------------------------------
 
     async removeToken(refreshToken) {
-        // const tokenData = TokenModel.deleteOne({ refreshToken })
-        return tokenData
+        const token = await pool
+            .query(deleteTokenQuery, [refreshToken])
+            .then((res) => res.rows[0])
+        return token
     }
 
     //-----------------------------------------------------------
 
     async findToken(refreshToken) {
-        const tokenData = await pool.query(selectTokenByTokenQuery, [
-            refreshToken,
-        ]).then((res) => res.rows[0])
-        
+        const tokenData = await pool
+            .query(selectTokenByTokenQuery, [refreshToken])
+            .then((res) => res.rows[0])
+
         return tokenData
     }
 }

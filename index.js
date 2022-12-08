@@ -50,7 +50,6 @@ io.on('connection', (socket) => {
 
     socket.on('dialogue:add', async (data) => {
         const sendUserSocket = onlineUsers.get(data.toUserId)
-
         if (sendUserSocket) {
             const user = await dialogueSocketController.getDialogueForNotOwner(
                 data.dialogueId
@@ -61,13 +60,20 @@ io.on('connection', (socket) => {
 
     socket.on('dialogue:delete', async (data) => {
         const sendUserSocket = onlineUsers.get(data.toUserId)
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit('dialogue:delete', {
+                dialogueId: data.dialogueId,
+                userId: data.userId,
+            })
+        }
+    })
 
-        console.log(data)
-
+    socket.on('conversation-clear-history:add', async (data) => {
+        const sendUserSocket = onlineUsers.get(data.toUserId)
         if (sendUserSocket)
-            socket
-                .to(sendUserSocket)
-                .emit('dialogue:delete', { dialogueId: data.dialogueId })
+            socket.to(sendUserSocket).emit('conversation-clear-history:get', {
+                dialogueId: data.dialogueId,
+            })
     })
 
     socket.on('message:add', (data) => {
@@ -79,6 +85,10 @@ io.on('connection', (socket) => {
                 dialogueId: data.dialogueId,
             })
         }
+    })
+
+    socket.on('logout', (data) => {
+        onlineUsers.delete(data.userId)
     })
 
     socket.on('disconnecting', () => {

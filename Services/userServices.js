@@ -13,9 +13,9 @@ const selectUserById = `SELECT users.user_id as id, users.username, images.path 
 
 const selectUsersQuery = `SELECT users.user_id, users.username, users.email, images.path as imagePath,
     (CASE WHEN (SELECT COUNT(*) FROM dialogues WHERE 
-	(dialogues.first_user_id = users.user_id AND dialogues.second_user_id = 99) 
+	(dialogues.first_user_id = users.user_id AND dialogues.second_user_id = $1) 
 	OR 
-	(dialogues.first_user_id = 99 AND dialogues.second_user_id = users.user_id)
+	(dialogues.first_user_id = $1 AND dialogues.second_user_id = users.user_id)
     ) = 0 THEN 0 ELSE 1 END) as is_exist_dialogue
     FROM users 
     LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 AND username LIKE $2 ORDER BY user_id DESC 
@@ -109,10 +109,12 @@ class UserService {
     }
 
     async getUserIdByDialogueId(firstUserId, dialogueId) {
+        
         const secondUserId = await pool
             .query(selectUserIdByDialogueId, [firstUserId, dialogueId])
-            .then((res) => res[0].user_id)
+            .then((res) => res.rows[0]?.user_id)
 
+        
         return secondUserId
     }
 }

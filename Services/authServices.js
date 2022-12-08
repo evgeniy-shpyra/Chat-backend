@@ -40,12 +40,10 @@ class AuthService {
     }
 
     async login({ username, password }) {
-        
-        
         const selectUser = await pool
             .query(selectUserByUsernameQuery, [username])
             .then((res) => res.rows[0])
-       
+
         if (!selectUser) throw new Error('Incorrect username or password')
 
         const isPasswordRight = await bcrypt.compare(
@@ -104,6 +102,11 @@ class AuthService {
         user.image_path = selectUser.image_path
 
         return { user, tokens }
+    }
+
+    async logout(refreshToken) {
+        const token = await tokenService.removeToken(refreshToken)
+        return token
     }
 }
 

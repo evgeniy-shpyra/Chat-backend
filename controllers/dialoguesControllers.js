@@ -37,10 +37,14 @@ module.exports.getDialogues = async (req, res, next) => {
 module.exports.deleteDialogue = async (req, res, next) => {
     try {
         const dialogueId = req.params.id
+        const userId = req.user.id
 
-        await dialoguesServices.deleteDialogue(dialogueId)
+        const interlocutorId = await dialoguesServices.deleteDialogue(
+            userId,
+            dialogueId
+        )
 
-        return res.json({ data: { id: dialogueId }, resultCode: 1 })
+        return res.json({ data: { interlocutorId }, resultCode: 1 })
     } catch (e) {
         console.log(e)
         return res.json({ msg: e.message, resultCode: 0 })

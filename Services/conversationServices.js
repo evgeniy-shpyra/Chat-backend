@@ -7,9 +7,16 @@ const selectUserByIdQuery =
     'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
 const insertMessageQuery = `INSERT INTO messages (dialogue_id, text, date, owner_user_id) VALUES
     ($1, $2, $3, $4) RETURNING message_id, text, date, owner_user_id`
+const deleteMessagesByDialogueId = `DELETE FROM messages WHERE dialogue_id = $1`
+const selectDialoguesByDialogueId = `SELECT * FROM dialogues WHERE dialogue_id = $1`
 
 class conversationServices {
     async getConversation(dialogueId) {
+        const dialogue = await pool
+            .query(selectDialoguesByDialogueId, [dialogueId])
+            .then((res) => res.rows)
+
+        if (dialogue.length === 0) throw new Error("Dialogue isn't exist")
 
         const conversation = await pool
             .query(selectMessagesByDialogueId, [dialogueId])
@@ -27,14 +34,14 @@ class conversationServices {
                 ownerUserId,
             ])
             .then((res) => res.rows[0])
-
-        // var options = { hour12: false }
-
-        // const date = message.date.toLocaleDateString('en-US', options).split('/').join('.')
-        // const time = message.date.toLocaleTimeString('en-US', options)
-
         return message
+    }
+
+    async clearHistory(dialogueId) {
+        await pool.query(deleteMessagesByDialogueId, [dialogueId])
+        return dialogueId 
     }
 }
 
 module.exports = new conversationServices()
+ 
