@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "nodemon index.js",
+        "start": "nodemon server.mjs",
         "lint": "eslint --ignore-path .gitignore .",
         "lint:fix": "npm run lint -- --fix",
         "format": "prettier --ignore-path .gitignore --check .",
