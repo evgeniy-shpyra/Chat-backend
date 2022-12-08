@@ -35,8 +35,10 @@ const io = socket(server, {
     cors: {
         origin: process.env.CLIENT_URL,
         credentials: true,
+        transports: ['websocket', 'polling'],
         methods: ['GET', 'POST'],
     },
+    allowEIO3: true
 })
 
 global.onlineUsers = new Map()
