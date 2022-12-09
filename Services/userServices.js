@@ -1,6 +1,6 @@
 const s3 = require('../aws/index')
 const pool = require('../db')
-const jimp = require('jimp')
+const Jimp = require('jimp')
 
 const insertImageQuery =
     'INSERT INTO images (path, user_id) VALUES ($1, $2) RETURNING user_id as id, path'
@@ -37,12 +37,13 @@ const selectUserIdByDialogueId = `SELECT (CASE WHEN dialogues.first_user_id = $1
 
 class UserService {
     async addAvatar(file, id) {
+        let croppedFileBuffer = null
 
-        const coverImg = await jimp.read(file.data)
-        coverImg.cover(150, 150)
-
-        console.log('\n\ncoverImg', coverImg.getBuffer())
-        console.log('\n\nfile', file)
+        const croppedImg = await Jimp.read(file.data)
+        croppedImg.cover(255, 255)
+        croppedImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+            croppedFileBuffer = buffer
+        })
 
         const userDate = await pool
             .query(selectUserByIdQuery, [id])
@@ -54,18 +55,19 @@ class UserService {
 
         const existingPicture = await pool
             .query(selectImageByUserIdQuery, [id])
-            .then((res) => res.rows[0]) 
+            .then((res) => res.rows[0])
 
-        if (existingPicture) {
+        if (existingPicture)
             throw Error(`The image already exists for this user`)
-        }
 
+        if (!croppedFileBuffer) throw Error(`Error occurred`)
+        
         const imageName = new Date().getTime() + '-' + file.name
 
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: imageName,
-            Body: file.data,
+            Body: croppedFileBuffer,
             ACL: 'public-read-write',
             ContentType: file.mimetype,
         }
