@@ -34,7 +34,7 @@ const server = app.listen(port, () => {
 const io = socket(server, {
     cors: {
         // origin: [process.env.CLIENT_URL],
-        origin: 'http://chat-frontend-snowy.vercel.app',
+        origin: 'https://chat-frontend-snowy.vercel.app',
         credentials: true,
         methods: ['GET', 'POST'],
     },
