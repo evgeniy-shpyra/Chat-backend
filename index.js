@@ -34,11 +34,11 @@ const server = app.listen(port, () => {
 const io = socket(server, {
     cors: {
         // origin: [process.env.CLIENT_URL],
-        origin: ['https://chat-frontend-snowy.vercel.app'],
-        // credentials: true,
+        origin: 'https://chat-frontend-snowy.vercel.app',
+        credentials: true,
         methods: ['GET', 'POST'],
     },
-    allowEIO3: true
+    // allowEIO3: true
 })
 
 global.onlineUsers = new Map()
