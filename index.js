@@ -35,6 +35,7 @@ const io = socket(server, {
         origin: [process.env.CLIENT_URL],
         // origin: 'https://chat-frontend-snowy.vercel.app',
         // credentials: true,
+        transports: ['websocket', 'polling'],
         methods: ['GET', 'POST'],
     },
     // allowEIO3: true
@@ -42,12 +43,7 @@ const io = socket(server, {
 
 global.onlineUsers = new Map()
 
-io.engine.on('connection_error', (err) => {
-    console.log('err.req', err.req) // the request object
-    console.log('err.code', err.code) // the error code, for example 1
-    console.log('err.message', err.message) // the error message, for example "Session ID unknown"
-    console.log('err.context', err.context) // some additional error context
-})
+
 
 io.on('connection', (socket) => {
     global.chatSocket = socket
