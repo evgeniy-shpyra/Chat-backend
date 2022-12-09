@@ -35,7 +35,7 @@ const io = socket(server, {
     cors: {
         origin: [process.env.CLIENT_URL],
         // origin: 'https://chat-frontend-snowy.vercel.app',
-        credentials: true,
+        // credentials: true,
         methods: ['GET', 'POST'],
     },
     // allowEIO3: true
