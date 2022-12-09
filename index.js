@@ -33,7 +33,8 @@ const server = app.listen(port, () => {
 
 const io = socket(server, {
     cors: {
-        origin: [process.env.CLIENT_URL],
+        // origin: [process.env.CLIENT_URL],
+        origin: ['http://localhost:3000'],
         credentials: true,
         methods: ['GET', 'POST'],
     },
@@ -41,7 +42,6 @@ const io = socket(server, {
 })
 
 global.onlineUsers = new Map()
-// global.onlineUsers = new Array()
 
 io.on('connection', (socket) => {
     global.chatSocket = socket
