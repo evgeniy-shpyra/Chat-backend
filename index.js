@@ -12,13 +12,12 @@ const dialogueSocketController = require('./socketControllers/dialogueSocketCont
 
 const app = express()
 const port = process.env.PORT
- 
 
 app.use(cookieParser())
 app.use(
     cors({
         credentials: true,
-        origin: [process.env.CLIENT_URL]
+        origin: [process.env.CLIENT_URL],
     })
 )
 app.use(fileUpload({}))
@@ -43,17 +42,15 @@ const io = socket(server, {
 
 global.onlineUsers = new Map()
 
-io.engine.on("connection_error", (err) => {
-    console.log(err.req);      // the request object
-    console.log(err.code);     // the error code, for example 1
-    console.log(err.message);  // the error message, for example "Session ID unknown"
-    console.log(err.context);  // some additional error context
-  });
+io.engine.on('connection_error', (err) => {
+    console.log('err.req', err.req) // the request object
+    console.log('err.code', err.code) // the error code, for example 1
+    console.log('err.message', err.message) // the error message, for example "Session ID unknown"
+    console.log('err.context', err.context) // some additional error context
+})
 
 io.on('connection', (socket) => {
     global.chatSocket = socket
-
-    
 
     socket.on('online:add', (userId) => {
         onlineUsers.set(userId, socket.id)
