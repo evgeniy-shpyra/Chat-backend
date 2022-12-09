@@ -59,7 +59,6 @@ module.exports.refresh = async (req, res, next) => {
             sameSite: 'none',
             secure: true,
         })
-        console.log(res.cookie)
         res.json({ data: userData, resultCode: 1 })
     } catch (e) {
         console.log(e)

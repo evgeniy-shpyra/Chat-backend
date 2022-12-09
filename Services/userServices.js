@@ -1,5 +1,6 @@
 const s3 = require('../aws/index')
 const pool = require('../db')
+const jimp = require('jimp')
 
 const insertImageQuery =
     'INSERT INTO images (path, user_id) VALUES ($1, $2) RETURNING user_id as id, path'
@@ -16,7 +17,7 @@ const selectUsersQuery = `SELECT users.user_id, users.username, users.email, ima
 	(dialogues.first_user_id = users.user_id AND dialogues.second_user_id = $1) 
 	OR 
 	(dialogues.first_user_id = $1 AND dialogues.second_user_id = users.user_id)
-    ) = 0 THEN 0 ELSE 1 END) as is_exist_dialogue
+    ) = 0 THEN 0 ELSE 1 END) as is_exist_dialogue 
     FROM users 
     LEFT JOIN images ON images.user_id = users.user_id WHERE users.user_id != $1 AND username LIKE $2 ORDER BY user_id DESC 
     LIMIT $3 OFFSET $4`
@@ -36,6 +37,13 @@ const selectUserIdByDialogueId = `SELECT (CASE WHEN dialogues.first_user_id = $1
 
 class UserService {
     async addAvatar(file, id) {
+
+        const coverImg = await jimp.read(file.data)
+        coverImg.cover(150, 150)
+
+        console.log('\n\ncoverImg', coverImg.getBuffer())
+        console.log('\n\nfile', file)
+
         const userDate = await pool
             .query(selectUserByIdQuery, [id])
             .then((res) => res.rows[0])
@@ -46,7 +54,7 @@ class UserService {
 
         const existingPicture = await pool
             .query(selectImageByUserIdQuery, [id])
-            .then((res) => res.rows[0])
+            .then((res) => res.rows[0]) 
 
         if (existingPicture) {
             throw Error(`The image already exists for this user`)
@@ -109,12 +117,10 @@ class UserService {
     }
 
     async getUserIdByDialogueId(firstUserId, dialogueId) {
-        
         const secondUserId = await pool
             .query(selectUserIdByDialogueId, [firstUserId, dialogueId])
             .then((res) => res.rows[0]?.user_id)
 
-        
         return secondUserId
     }
 }
