@@ -35,7 +35,7 @@ const io = socket(server, {
         origin: [process.env.CLIENT_URL],
         // origin: 'https://chat-frontend-snowy.vercel.app',
         // credentials: true,
-        transports: ['websocket', 'polling'],
+        transports: ['websocket'],
         methods: ['GET', 'POST'],
     },
     // allowEIO3: true
