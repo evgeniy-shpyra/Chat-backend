@@ -37,7 +37,8 @@ const io = new Server(httpServer, {
         origin: `${process.env.CLIENT_URL_SOCKET}`,
         methods: ['GET', 'POST'],
         credentials: true,
-    }, 
+    },
+    secure: true
 })
 
 // const server = app.listen(port, () => {
