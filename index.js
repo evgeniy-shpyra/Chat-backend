@@ -1,5 +1,9 @@
 require('dotenv').config()
+
 const express = require('express')
+const { createServer } = require('http')
+const { Server } = require('socket.io')
+
 const cors = require('cors')
 const fileUpload = require('express-fileupload')
 const cookieParser = require('cookie-parser')
@@ -26,17 +30,31 @@ app.use(express.json())
 app.use('/api', userRouter, dialogueRouter, conversationRoute)
 app.use('/api/auth', authRouter)
 
-const server = app.listen(port, () => {
-    console.log(`Server started on port ${port}`)
-})
+const httpServer = createServer(app)
 
-const io = socket(server, {
+const io = new Server(httpServer, {
     cors: {
         origin: `${process.env.CLIENT_URL_SOCKET}`,
         methods: ['GET', 'POST'],
         credentials: true,
-    },
+    }, 
 })
+
+// const server = app.listen(port, () => {
+//     console.log(`Server started on port ${port}`)
+// })
+
+httpServer.listen(port, () => {
+    console.log(`Server started on port ${port}`)
+})
+
+// const io = socket(server, {
+//     cors: {
+//         origin: `${process.env.CLIENT_URL_SOCKET}`,
+//         methods: ['GET', 'POST'],
+//         credentials: true,
+//     },
+// })
 
 global.onlineUsers = new Map()
 
