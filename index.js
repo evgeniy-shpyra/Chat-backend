@@ -30,24 +30,15 @@ app.use(express.json())
 app.use('/api', userRouter, dialogueRouter, conversationRoute)
 app.use('/api/auth', authRouter)
 
-const httpServer = createServer(app)
+// const httpServer = createServer(app)
 
-const io = new Server(httpServer, {
-    cors: {
-        origin: `${process.env.CLIENT_URL_SOCKET}`,
-        methods: ['GET', 'POST'],
-        credentials: true,
-    },
-    secure: true
-})
-
-// const server = app.listen(port, () => {
-//     console.log(`Server started on port ${port}`)
-// })
-
-httpServer.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server started on port ${port}`)
 })
+
+// httpServer.listen(port, () => {
+//     console.log(`Server started on port ${port}`)
+// })
 
 // const io = socket(server, {
 //     cors: {
@@ -58,6 +49,14 @@ httpServer.listen(port, () => {
 // })
 
 global.onlineUsers = new Map()
+
+const io = new Server(server, {
+    cors: {
+        origin: process.env.CLIENT_URL,
+        methods: ['GET', 'POST'],
+        credentials: true,
+    },
+})
 
 io.on('connection', (socket) => {
     global.chatSocket = socket

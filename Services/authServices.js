@@ -1,7 +1,7 @@
 const pool = require('../db')
 const bcrypt = require('bcrypt')
 const tokenService = require('./tokenService')
-const userServices = require('./userServices')
+
 
 const insertUserQuery =
     'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id as id, username, email'

@@ -1,10 +1,8 @@
-const s3 = require('../aws/index')
 const pool = require('../db')
-const tokenService = require('./tokenService')
 
 const selectMessagesByDialogueId = `SELECT messages.message_id as id, messages.owner_user_id, messages.text, messages.date FROM messages WHERE dialogue_id = $1 ORDER BY date`
-const selectUserByIdQuery =
-    'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
+// const selectUserByIdQuery =
+//     'SELECT user_id as id, username, email, password FROM users WHERE user_id=$1'
 const insertMessageQuery = `INSERT INTO messages (dialogue_id, text, date, owner_user_id) VALUES
     ($1, $2, $3, $4) RETURNING message_id, text, date, owner_user_id`
 const deleteMessagesByDialogueId = `DELETE FROM messages WHERE dialogue_id = $1`
