@@ -24,6 +24,9 @@ class conversationServices {
     }
 
     async addMessage(text, dialogueId, ownerUserId) {
+
+        console.log('\n\conversationServices addMessage\n\n')
+        
         const message = await pool
             .query(insertMessageQuery, [
                 dialogueId,

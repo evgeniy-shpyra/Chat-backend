@@ -64,6 +64,8 @@ class DialoguesService {
 
         if (createdDialogue.length > 0) throw Error(`Dialogues already created`)
 
+        console.log('\n\nDialoguesService addDialogue\n\n')
+
         const dialogueId = await pool
             .query(creteDialogueQuery, [
                 ownerId,

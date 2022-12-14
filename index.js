@@ -67,6 +67,7 @@ io.on('connection', (socket) => {
 
     socket.on('dialogue:add', async (data) => {
         const sendUserSocket = onlineUsers.get(data.toUserId)
+        console.log('add dialogue socket')
         if (sendUserSocket) {
             const user = await dialogueSocketController.getDialogueForNotOwner(
                 data.dialogueId
